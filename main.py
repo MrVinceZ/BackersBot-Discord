@@ -13,7 +13,10 @@ import string
 # Bot Config
 import bot_config
 
-bot = commands.Bot(command_prefix='.', description='''Backers Verification Bot''')
+intents = discord.Intents.default()
+intents.members = True
+
+bot = commands.Bot(command_prefix='.', description='''Backers Verification Bot''',intents=intents)
 
 
 def main():

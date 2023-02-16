@@ -192,6 +192,40 @@ async def backer_verify(ctx, email: str, token: str):
         await bot.delete_message(ctx.message)
         await bot.send_message(ctx.message.author, "That command only works on private message. "
                                                    "Please send me the command again.")
+        
+@bot.command(pass_context=True)
+async def db_update(ctx):
+    log_command(ctx.message.author, "db_update")
+
+    # Only works if we're on a private message
+    if ctx.message.channel.is_private:
+        # Connect to the database and check if the email-token is correct
+        mariadb = db_connect()
+
+        try:
+            with mariadb.cursor() as cursor:
+                cursor.execute("SELECT discord_user_id, role_id FROM backers WHERE discord_user_id <> '';")
+                results = cursor.fetchall()
+                await bot.say("Début de l'analyse de la base de donnée")
+                for result in results:
+                    # Check if the user has joined server
+                    server = bot.get_server(id=bot_config.server_id)
+                    server_member = discord.utils.get(server.members, id=result["discord_user_id"])
+                    if server_member is not None:
+                        server_role = discord.utils.get(server.roles, id=result["role_id"])
+                        if server_member.id != server_role:
+                            #await bot.remove_roles(server_member, server_member.roles[0])
+                            #await bot.add_roles(server_member, server_role)
+                            await bot.say(
+                                "Found an user to update : "
+                                "{0} was a {1} role and now it need to be update to {2}".format(server_member.name,server_member.roles[0],server_role.name))
+        finally:
+            cursor.close()
+            mariadb.close()
+    else:
+        await bot.delete_message(ctx.message)
+        await bot.send_message(ctx.message.author, "That command only works on private message. "
+                                                   "Please send me the command again.")
 # endregion
 
 
